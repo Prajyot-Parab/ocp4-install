@@ -1,0 +1,41 @@
+---
+#ocp-cp vars
+cp_install: false  #Set to true to enable Cloud Paks playbook
+cp_setup_dir: ~/setup-files/icp-setup  #Setup directory path
+docker_install_rpm_url: []  #List of rpm URLs for installing docker
+cp_repo_token: ""  #Artifactory token used for authentication to pull inception image or download offline file
+cp_repo_namespace: "ibmcom-ppc64le"  #Inception image namespace
+inception_image_name: "icp-inception"  #Name of the inception image
+inception_image_tag: "3.2.4"  #Inception image tag to use
+cp_admin_username: "admin"  #CloudPak admin username to configure
+cp_admin_password: "yellow-yourself-yielding-youthful"  #CloudPak admin password to configure
+storageclass_name: "managed-nfs-storage"  #StorageClass name
+master: []
+proxy: []
+management: []
+
+##Required for offline install method
+cp_offline_tarball_url: ""  #Full offline tarball file url
+
+##Required for online install method
+cp_stage: "edge"  #Stage name to install
+cp_repo_server: "hyc-cloud-private-{{ cp_stage }}-docker-local.artifactory.swg-devops.com"  #Artifactory server URL
+cp_repo_user: ""  #Artifactory user for authentication for pulling inception image
+
+##Multi-line extra config to be appended to config.yaml
+cp_additional_config: |
+  management_services:
+    # Common services
+    iam-policy-controller: enabled
+    metering: enabled
+    licensing: disabled
+    monitoring: enabled
+    nginx-ingress: enabled
+    common-web-ui: enabled
+    catalog-ui: enabled
+    mcm-kui: enabled
+    logging: disabled
+    audit-logging: disabled
+    system-healthcheck-service: disabled
+    multitenancy-enforcement: disabled
+

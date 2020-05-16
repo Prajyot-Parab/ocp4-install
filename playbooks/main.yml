@@ -1,0 +1,4 @@
+---
+- import_playbook: ocp-cp.yml
+  when: cp_install
+

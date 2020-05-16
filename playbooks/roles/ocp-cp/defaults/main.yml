@@ -1,0 +1,33 @@
+---
+cp_setup_dir: ~/setup-files/icp-setup
+docker_install_rpm_url: []
+cp_offline_tarball_url: ""
+cp_stage: "edge"
+cp_repo_server: "hyc-cloud-private-{{ cp_stage }}-docker-local.artifactory.swg-devops.com"
+cp_repo_user: ""
+cp_repo_token: ""
+cp_repo_namespace: "ibmcom-ppc64le"
+inception_image_name: "icp-inception"
+inception_image_tag: "3.2.4"
+cp_admin_username: "admin"
+cp_admin_password: "yellow-yourself-yielding-youthful"
+storageclass_name: "managed-nfs-storage"
+master: []
+proxy: []
+management: []
+cp_additional_config: |
+  management_services:
+    # Common services
+    iam-policy-controller: enabled
+    metering: enabled
+    licensing: disabled
+    monitoring: enabled
+    nginx-ingress: enabled
+    common-web-ui: enabled
+    catalog-ui: enabled
+    mcm-kui: enabled
+    logging: disabled
+    audit-logging: disabled
+    system-healthcheck-service: disabled
+    multitenancy-enforcement: disabled
+

@@ -1,0 +1,75 @@
+---
+- name: Install docker rpm
+  yum:
+    name:
+    - {{ docker_install_rpm_url }}
+    state: present
+  when: docker_install_rpm_url|length|int > 0
+
+- name: Create setup directory
+  file:
+    path: "{{ cp_setup_dir }}"
+    state: "{{ item }}"
+    mode: '0755'
+  with_items:
+  - absent
+  - directory
+ 
+- name: Enable docker 
+  shell: |
+    systemctl enable --now docker
+  args:
+    chdir: "{{ cp_setup_dir }}"
+
+- name: Set image name
+  set_fact:
+    image_name: "{{ cp_repo_server }}/{{ cp_repo_namespace }}/{{ inception_image_name }}:{{ inception_image_tag }}"
+
+- name: Online Cloud Pak setup
+  when: cp_offline_tarball_url == ""
+  shell: |
+    docker login -u {{ cp_repo_user }} -p {{ cp_repo_token }} {{ cp_repo_server }}
+    docker pull {{ image_name }}
+    docker run --rm -v $(pwd):/data:z -e LICENSE=accept --security-opt label:disable {{ image_name }} cp -r cluster /data
+  args:
+    chdir: "{{ cp_setup_dir }}"
+
+- name: Download offline Cloud Pak installation tarball
+  when: cp_offline_tarball_url != ""
+  get_url:
+    url: {{ cp_offline_tarball_url }}
+    dest: {{ cp_setup_dir }}
+    headers:
+      X-JFrog-Art-Api: {{ cp_repo_token }}
+    
+- name: Offline Cloud Pak setup
+  when: cp_offline_tarball_url != ""
+  shell: |
+    tar xf $(basename {{ cp_offline_tarball_url }}) -O | sudo docker load
+    sudo docker run --rm -v $(pwd):/data:z -e LICENSE=accept --security-opt label:disable {{ image_name }} cp -r cluster /data
+  args:
+    chdir: "{{ cp_setup_dir }}"
+    
+- name: Force install kubeconfig
+  copy:
+    src: "{{ workdir }}/auth/kubeconfig"
+    dest: "{{ cp_setup_dir }}/cluster/kubeconfig"
+    force: yes
+    
+- name: Generate config.yaml
+  template:
+    src: config.yaml.j2
+    dest: "/tmp/config.yaml"
+    
+- name: Backup config.yaml
+  copy:
+    src: "{{ cp_setup_dir }}/cluster/config.yaml"
+    dest: "{{ cp_setup_dir }}/cluster/config.yaml.original"
+    
+- name: Install Cloud Pak
+  shell: |
+    tee -a cluster/config.yaml </tmp/config.yaml >/dev/null
+    docker run -t --net=host -e LICENSE=accept -v $(pwd)/cluster:/installer/cluster:z -v /var/run:/var/run:z --security-opt label:disable {{ image_name }} addon
+  args:
+    chdir: "{{ cp_setup_dir }}"
+

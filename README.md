@@ -1,2 +1,3 @@
-# ocp4-install
-ocp4-install ansible module test repo
+# ocp-cp
+ocp-cp ansible playbook to install Cloud Paks
+

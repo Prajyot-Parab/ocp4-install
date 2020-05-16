@@ -1,0 +1,6 @@
+---
+- name: Install Cloud Paks 
+  hosts: bastion
+  roles:
+  - ocp-cp
+
