@@ -1,10 +1,29 @@
 ---
-- name: Install docker rpm
-  yum:
-    name:
-    - {{ docker_install_rpm_url }}
-    state: present
-  when: docker_install_rpm_url|length|int > 0
+- name: Retrieve count of master and worker nodes
+  shell: |
+    oc get nodes | awk '{ print $3 }' | grep {{ item }} | wc -l
+  register: result
+  with_items:
+  - master
+  - worker
+
+- name: Retrieve workers info
+  shell: |
+    oc get nodes | awk '{ print $1 }' | grep worker
+  register: info
+
+- name: Set facts for masters and workers information
+  set_fact:
+    master_count: "{{ result.results[0].stdout|int }}"
+    worker_count: "{{ result.results[1].stdout|int }}"
+    workers_info: "{{ info.stdout_lines|list }}"
+
+- name: Set facts for configuring Cloud Pak installtion
+  set_fact:
+    master: "{{ workers_info[0:3] if (master_count|int >= 3 and worker_count|int >= 3) else workers_info[0:1] if (worker_count|int >= 1) else [] }}"
+    proxy: "{{ workers_info[0:3] if (master_count|int >= 3 and worker_count|int >= 3) else workers_info[0:1] if (worker_count|int >= 1) else [] }}"
+    management: "{{ workers_info[0:3] if (master_count|int >= 3 and worker_count|int >= 3) else workers_info[1:2] if (worker_count|int >= 2) else workers_info[0:1] if (worker_count|int == 1) else [] }}"
+    image_name: "{{ cp_repo_server }}/{{ cp_repo_namespace }}/{{ inception_image_name }}:{{ inception_image_tag }}"
 
 - name: Create setup directory
   file:
@@ -14,62 +33,34 @@
   with_items:
   - absent
   - directory
- 
-- name: Enable docker 
-  shell: |
-    systemctl enable --now docker
-  args:
-    chdir: "{{ cp_setup_dir }}"
-
-- name: Set image name
-  set_fact:
-    image_name: "{{ cp_repo_server }}/{{ cp_repo_namespace }}/{{ inception_image_name }}:{{ inception_image_tag }}"
 
 - name: Online Cloud Pak setup
-  when: cp_offline_tarball_url == ""
   shell: |
-    docker login -u {{ cp_repo_user }} -p {{ cp_repo_token }} {{ cp_repo_server }}
-    docker pull {{ image_name }}
-    docker run --rm -v $(pwd):/data:z -e LICENSE=accept --security-opt label:disable {{ image_name }} cp -r cluster /data
+    podman login -u {{ cp_repo_user }} -p {{ cp_repo_token }} {{ cp_repo_server }}
+    podman run --rm -v $(pwd):/data:z -e LICENSE=accept --security-opt label=disable {{ image_name }} cp -r cluster /data
   args:
     chdir: "{{ cp_setup_dir }}"
 
-- name: Download offline Cloud Pak installation tarball
-  when: cp_offline_tarball_url != ""
-  get_url:
-    url: {{ cp_offline_tarball_url }}
-    dest: {{ cp_setup_dir }}
-    headers:
-      X-JFrog-Art-Api: {{ cp_repo_token }}
-    
-- name: Offline Cloud Pak setup
-  when: cp_offline_tarball_url != ""
-  shell: |
-    tar xf $(basename {{ cp_offline_tarball_url }}) -O | sudo docker load
-    sudo docker run --rm -v $(pwd):/data:z -e LICENSE=accept --security-opt label:disable {{ image_name }} cp -r cluster /data
-  args:
-    chdir: "{{ cp_setup_dir }}"
-    
 - name: Force install kubeconfig
   copy:
-    src: "{{ workdir }}/auth/kubeconfig"
+    src: "~/openstack-upi/auth/kubeconfig"
     dest: "{{ cp_setup_dir }}/cluster/kubeconfig"
     force: yes
-    
+
 - name: Generate config.yaml
   template:
     src: config.yaml.j2
     dest: "/tmp/config.yaml"
-    
+
 - name: Backup config.yaml
   copy:
     src: "{{ cp_setup_dir }}/cluster/config.yaml"
     dest: "{{ cp_setup_dir }}/cluster/config.yaml.original"
-    
+
 - name: Install Cloud Pak
   shell: |
     tee -a cluster/config.yaml </tmp/config.yaml >/dev/null
-    docker run -t --net=host -e LICENSE=accept -v $(pwd)/cluster:/installer/cluster:z -v /var/run:/var/run:z --security-opt label:disable {{ image_name }} addon
+    podman run -t --net=host -e LICENSE=accept -v $(pwd)/cluster:/installer/cluster:z -v /var/run:/var/run:z --security-opt label=disable {{ image_name }} addon
   args:
     chdir: "{{ cp_setup_dir }}"
 

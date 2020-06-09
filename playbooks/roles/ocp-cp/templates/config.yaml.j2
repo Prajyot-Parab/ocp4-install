@@ -18,7 +18,6 @@ storage_class: {{ storageclass_name }}
 default_admin_user: {{ cp_admin_username }}
 default_admin_password: {{ cp_admin_password }}
 
-{% if cp_offline_tarball_url == "" %}
 chart_repo:
   addons:
     url: "https://na.artifactory.swg-devops.com/artifactory/ui/artifactactions/downloadfolder?repoKey=hyc-cloud-private-{{ cp_stage }}-helm-local&path=latest&archiveType=tgz&includeChecksumFiles=false"
@@ -30,7 +29,6 @@ private_registry_enabled: true
 private_registry_server: {{ cp_repo_server }}
 docker_username: {{ cp_repo_user }}
 docker_password: {{ cp_repo_token }}
-{% endif %}
 
 {{ cp_additional_config }}
 

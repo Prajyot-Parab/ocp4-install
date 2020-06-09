@@ -1,7 +1,5 @@
 ---
 cp_setup_dir: ~/setup-files/icp-setup
-docker_install_rpm_url: []
-cp_offline_tarball_url: ""
 cp_stage: "edge"
 cp_repo_server: "hyc-cloud-private-{{ cp_stage }}-docker-local.artifactory.swg-devops.com"
 cp_repo_user: ""
@@ -12,9 +10,6 @@ inception_image_tag: "3.2.4"
 cp_admin_username: "admin"
 cp_admin_password: "yellow-yourself-yielding-youthful"
 storageclass_name: "managed-nfs-storage"
-master: []
-proxy: []
-management: []
 cp_additional_config: |
   management_services:
     # Common services
