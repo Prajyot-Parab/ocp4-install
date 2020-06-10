@@ -1,0 +1,6 @@
+---
+
+##ocp-upgrade vars
+upgrade_enabled: false
+upgrage_release_file_url: "https://mirror.openshift.com/pub/openshift-v4/ppc64le/clients/ocp-dev-preview/latest-4.4/release.txt"
+

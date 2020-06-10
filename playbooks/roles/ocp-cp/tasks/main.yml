@@ -60,6 +60,12 @@
 - name: Install Cloud Pak
   shell: |
     tee -a cluster/config.yaml </tmp/config.yaml >/dev/null
+  args:
+    chdir: "{{ cp_setup_dir }}"
+
+- name: Install Cloud Pak
+  shell: |
+    #tee -a cluster/config.yaml </tmp/config.yaml >/dev/null
     podman run -t --net=host -e LICENSE=accept -v $(pwd)/cluster:/installer/cluster:z -v /var/run:/var/run:z --security-opt label=disable {{ image_name }} addon
   args:
     chdir: "{{ cp_setup_dir }}"

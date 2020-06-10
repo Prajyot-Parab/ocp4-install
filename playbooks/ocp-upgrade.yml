@@ -1,0 +1,6 @@
+---
+- name: Upgrade OCP cluster
+  hosts: bastion
+  roles:
+  - ocp-upgrade
+

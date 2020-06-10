@@ -2,3 +2,6 @@
 - import_playbook: ocp-cp.yml
   when: cp_install
 
+- import_playbook: ocp-upgrade.yml
+  when: upgrade_enabled
+

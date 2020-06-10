@@ -1,0 +1,15 @@
+---
+- name: Download release file
+  get_url:
+    url: "{{ upgrage_release_file_url }}"
+    dest: "/tmp/release.txt"
+    
+- name: Retrieve latest image
+  shell: |
+    cat /tmp/release.txt | grep Pull | awk -F":" '{ print $2":"$3 }' | awk '{$1=$1};1'
+  register: image_name
+
+- name: Upgrade cluster
+  shell: |
+    oc adm upgrade --force --to-image="{{ image_name.stdout }}" --allow-explicit-upgrade
+
